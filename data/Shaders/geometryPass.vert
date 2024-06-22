@@ -105,14 +105,6 @@ void main()
 #endif // HAS_MORPH_TARGETS
 
     vec4 surfacePosWS = world * vec4(surfacePos, 1.0);
-
-#if defined(HAS_NORMALS) || defined(FLAT_SHADING)
-    for (int i = 0; i < MAX_NUM_DIR_LIGHTS + MAX_NUM_SPOT_LIGHTS; i++)
-    {
-        vsOut.surfacePosShadowMapUVSpace[i] = worldToShadowMapUVSpace[i] * surfacePosWS;
-    }
-#endif 
-
     vsOut.surfacePosVS = vec3(view * surfacePosWS);
 
 
