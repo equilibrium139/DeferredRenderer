@@ -137,18 +137,32 @@
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="GLTFHelpers.cpp" />
+    <ClCompile Include="GLTFResources.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="mikktspace.cpp" />
     <ClCompile Include="PBRMaterial.cpp" />
+    <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="tiny_gltf.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BBox.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="DeferredRenderer.h" />
+    <ClInclude Include="Entity.h" />
     <ClInclude Include="GLTFHelpers.h" />
+    <ClInclude Include="GLTFResources.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="mikktspace.h" />
     <ClInclude Include="PBRMaterial.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="Shader.h" />
+    <ClInclude Include="Skeleton.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexAttribute.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
