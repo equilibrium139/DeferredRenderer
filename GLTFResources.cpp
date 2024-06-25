@@ -43,7 +43,7 @@ static std::vector<std::string> GetShaderDefines(VertexAttribute flags, bool fla
 	return defines;
 }
 
-static bool IsLinearSpaceTexture(int textureIdx, const std::vector<tinygltf::Material> materials)
+static bool IsLinearSpaceTexture(int textureIdx, const std::vector<tinygltf::Material>& materials)
 {
 	for (const tinygltf::Material& material : materials)
 	{

@@ -2,7 +2,6 @@ layout(location=0) out vec4 oBaseColor;
 layout(location=1) out vec3 oMetallicRoughnessOcclusion;
 layout(location=2) out vec3 oNormal;
 layout(location=3) out vec3 oPosition;
-layout(location=4) out vec4 oVertexColor;
 
 #if defined(HAS_NORMALS) || defined(FLAT_SHADING)
     struct Material
@@ -66,13 +65,14 @@ void main()
     vec3 unitNormal = normalize(cross(dxTangent, dyTangent));
 #endif // HAS_NORMALS
 
-    oNormal = unitNormal;
+    oNormal = unitNormal + 1.0 * 0.5; // encode to [0, 1] range
 
 #if defined(HAS_NORMALS) || defined(FLAT_SHADING)
 
     #ifdef HAS_TEXCOORD
         vec4 baseColor = texture(material.baseColorTexture, fsIn.texCoords) * material.baseColorFactor;
         vec2 metallicRoughness = texture(material.metallicRoughnessTexture, fsIn.texCoords).bg * vec2(material.metallicFactor, material.roughnessFactor);
+        // TODO: fix occlusion bullshit. apparently this is wrong https://github.com/KhronosGroup/glTF/issues/884
         float occlusion = texture(material.occlusionTexture, fsIn.texCoords).r * material.occlusionStrength;
     #else
         vec4 baseColor = material.baseColorFactor;
@@ -85,9 +85,5 @@ void main()
 
     oBaseColor = baseColor;
     oMetallicRoughnessOcclusion = vec3(metallicRoughness, occlusion);
-#endif
-
-#ifdef HAS_VERTEX_COLORS
-    oVertexColor = vertexColor;
 #endif
 }

@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Framebuffer.h"
 #include "GLTFResources.h"
+#include "Light.h"
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -46,7 +47,6 @@ static std::vector<std::string> GetShaderDefines(VertexAttribute flags, bool fla
         defines.emplace_back("HAS_VERTEX_COLORS");
     }
 
-
     return defines;
 }
 
@@ -62,7 +62,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-    window = glfwCreateWindow(windowWidth, windowHeight, "Simple example", NULL, NULL);
+    window = glfwCreateWindow(windowWidth, windowHeight, "Deferred Renderer", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -97,45 +97,42 @@ int main(void)
     }
     Mesh duckMesh{ model.meshes[0], model };
     Shader geometryPassShader = Shader("Shaders/geometryPass.vert", "Shaders/geometryPass.frag", nullptr, GetShaderDefines(duckMesh.submeshes[0].flags, duckMesh.submeshes[0].flatShading));
-    Shader renderGBufferShader = Shader("Shaders/fullscreen.vert", "Shaders/fullscreen.frag");
 
-
-    // TODO: create framebuffer struct to make creation simpler
-    // Create G-buffer
-
-    Framebuffer gBuffer{ windowWidth, windowHeight,
+    // All color attachments are used for the geometry pass except for the last attachment which is an HDR texture used in the lighting pass.
+    // This makes it easy to use the depth buffer from the geometry pass in the lighting pass. 
+    Framebuffer framebuffer{ windowWidth, windowHeight,
         {
-            ColorAttachmentInfo {
-                .internalFormat = GL_RGBA16F,
+            ColorAttachmentInfo { // base color
+                .internalFormat = GL_RGBA8,
                 .format = GL_RGBA,
                 .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
-            ColorAttachmentInfo {
+            ColorAttachmentInfo { // metallic roughness occlusion
+                .internalFormat = GL_RGB8,
+                .format = GL_RGB,
+                .type = GL_FLOAT,
+                .minFilterMode = GL_LINEAR,
+                .magFilterMode = GL_LINEAR
+            },
+            ColorAttachmentInfo { // normal
+                .internalFormat = GL_RGB8,
+                .format = GL_RGB,
+                .type = GL_FLOAT,
+                .minFilterMode = GL_LINEAR,
+                .magFilterMode = GL_LINEAR
+            },
+            ColorAttachmentInfo { // position
                 .internalFormat = GL_RGB16F,
                 .format = GL_RGB,
                 .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
-            ColorAttachmentInfo {
+            ColorAttachmentInfo { // hdr texture for lighting pass
                 .internalFormat = GL_RGB16F,
                 .format = GL_RGB,
-                .type = GL_FLOAT,
-                .minFilterMode = GL_LINEAR,
-                .magFilterMode = GL_LINEAR
-            },
-            ColorAttachmentInfo {
-                .internalFormat = GL_RGB16F,
-                .format = GL_RGB,
-                .type = GL_FLOAT,
-                .minFilterMode = GL_LINEAR,
-                .magFilterMode = GL_LINEAR
-            },
-            ColorAttachmentInfo {
-                .internalFormat = GL_RGBA16F,
-                .format = GL_RGBA,
                 .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
@@ -143,12 +140,44 @@ int main(void)
         },
         GL_DEPTH24_STENCIL8
     };
+    framebuffer.Bind();
+    glEnablei(GL_BLEND, framebuffer.colorTextures.size() - 1); 
+    glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
+    glBlendEquation(GL_FUNC_ADD);
 
-    GLuint depthStencilRBO;
-    glGenRenderbuffers(1, &depthStencilRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRBO);
+    DirectionalLight light{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f), 10.0f };
+    Shader renderGBufferShader = Shader("Shaders/fullscreen.vert", "Shaders/fullscreen.frag");
+    Shader lightingPassShader = Shader("Shaders/lighting.vert", "Shaders/lightingDirectional.frag");
+
+    Shader postprocessShader = Shader("Shaders/fullscreen.vert", "Shaders/postprocess.frag");
+
+    GLfloat dirLightVertices[] = {
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f
+    };
+
+    GLuint dirLightIndices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    GLuint dirLightVAO;
+    glGenVertexArrays(1, &dirLightVAO);
+    glBindVertexArray(dirLightVAO);
+
+    GLuint dirLightVBO;
+    glGenBuffers(1, &dirLightVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, dirLightVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(dirLightVertices), dirLightVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+
+    GLuint dirLightIBO;
+    glGenBuffers(1, &dirLightIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dirLightIBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(dirLightIndices), dirLightIndices, GL_STATIC_DRAW);
 
     GLfloat quadVertices[] = {
         -1.0f, -1.0f, 0.0f, 0.0f,
@@ -180,8 +209,6 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
 
     Camera camera;
     camera.position.y = 80.0f;
@@ -201,7 +228,7 @@ int main(void)
         // Render
 
         glEnable(GL_DEPTH_TEST);
-        gBuffer.Bind();
+        framebuffer.Bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 view = camera.GetViewMatrix();
@@ -209,7 +236,7 @@ int main(void)
         glm::mat4 worldView = view * duckWorldMat;
         glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(worldView)));
 
-        geometryPassShader.use();
+        geometryPassShader.Use();
         geometryPassShader.SetMat4("world", duckWorldMat);
         geometryPassShader.SetMat4("view", view);
         geometryPassShader.SetMat4("projection", projection);
@@ -270,10 +297,45 @@ int main(void)
             glDrawArrays(GL_TRIANGLES, 0, mesh.countVerticesOrIndices);
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        renderGBufferShader.use();
+
+        lightingPassShader.Use();
+
+        glm::mat4 dirLightMVP = glm::mat4(1.0f);
+        lightingPassShader.SetMat4("mvp", dirLightMVP);
+
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, gBuffer.colorTextures[1]);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.colorTextures[0]);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.colorTextures[1]);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.colorTextures[2]);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.colorTextures[3]);
+
+        lightingPassShader.SetInt("gBaseColor", 0);
+        lightingPassShader.SetInt("gMetallicRoughnessOcclusion", 1);
+        lightingPassShader.SetInt("gNormal", 2);
+        lightingPassShader.SetInt("gPosition", 3);
+
+        lightingPassShader.SetVec2("resolution", (float)windowWidth, (float)windowHeight);
+        lightingPassShader.SetVec3("light.color", light.color);
+        lightingPassShader.SetFloat("light.intensity", light.intensity);
+        lightingPassShader.SetVec3("light.direction", light.directionVS);
+
+        glBindVertexArray(dirLightVAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glDisable(GL_DEPTH_TEST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, windowWidth, windowHeight);
+        postprocessShader.Use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, framebuffer.colorTextures[4]);
+        postprocessShader.SetInt("sceneColorsTexture", 0);
+        postprocessShader.SetFloat("exposure", 1.0f);
         glBindVertexArray(fullscreenQuadVAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

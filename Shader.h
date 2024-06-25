@@ -21,7 +21,7 @@ public:
 	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr, const std::vector<std::string>& defines = {});
 
 
-	void use();
+	void Use();
 
 	void SetBool(const char* name, bool value);
 	void SetInt(const char* name, int value);
@@ -33,6 +33,7 @@ public:
 	void SetMat4(const char* name, const glm::mat4& m);
 	void SetMat3(const char* name, const float* value);
 	void SetMat3(const char* name, const glm::mat3& m);
+	void SetVec2(const char* name, float x, float y);
 	void SetVec3(const char* name, float x, float y, float z);
 	void SetVec3(const char* name, const glm::vec3& vec);
 	void SetVec4(const char* name, float x, float y, float z, float w);

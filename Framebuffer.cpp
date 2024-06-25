@@ -1,6 +1,7 @@
 #include "Framebuffer.h"
 
 #include <cassert>
+#include <iostream>
 
 Framebuffer::Framebuffer(int width, int height, const std::vector<ColorAttachmentInfo>& colorAttachmentsInfo, GLint depthStencilInternalFormat)
 	:width(width), height(height)
@@ -32,6 +33,9 @@ Framebuffer::Framebuffer(int width, int height, const std::vector<ColorAttachmen
 	glBindRenderbuffer(GL_RENDERBUFFER, depthStencilRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthStencilRBO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
 }
 
 void Framebuffer::Bind()
