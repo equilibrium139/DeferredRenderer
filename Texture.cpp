@@ -1,7 +1,7 @@
 #include "Texture.h"
 
 // TODO: return reference from these funcs
-Texture Texture::White1x1TextureRGBA()
+const Texture& Texture::White1x1TextureRGBA()
 {
 	static Texture texture;
 	static bool firstTime = true;
@@ -18,7 +18,7 @@ Texture Texture::White1x1TextureRGBA()
 	return texture;
 }
 
-Texture Texture::Max1x1TextureRed()
+const Texture& Texture::Max1x1TextureRed()
 {
 	static Texture texture;
 	static bool firstTime = true;
@@ -35,7 +35,7 @@ Texture Texture::Max1x1TextureRed()
 	return texture;
 }
 
-Texture Texture::DepthCubemap1x1()
+const Texture& Texture::DepthCubemap1x1()
 {
 	static Texture texture;
 	static bool firstTime = true;
