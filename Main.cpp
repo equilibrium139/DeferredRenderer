@@ -5,7 +5,7 @@
 #include <tiny_gltf.h>
 #include "Camera.h"
 #include "Framebuffer.h"
-#include "GLTFResources.h"
+#include "GLTFParser.h"
 #include "Light.h"
 #include "Mesh.h"
 #include "Shader.h"
@@ -95,7 +95,9 @@ int main(void)
         printf("Failed to parse glTF\n");
         return -1;
     }
-    Mesh duckMesh{ model.meshes[0], model };
+
+    Scene scene = GLTFParser::Parse(model.scenes[model.defaultScene], model);
+    Mesh& duckMesh = scene.meshes[0];
     Shader geometryPassShader = Shader("Shaders/geometryPass.vert", "Shaders/geometryPass.frag", nullptr, GetShaderDefines(duckMesh.submeshes[0].flags, duckMesh.submeshes[0].flatShading));
 
     // All color attachments are used for the geometry pass except for the last attachment which is an HDR texture used in the lighting pass.
@@ -217,8 +219,6 @@ int main(void)
     glm::mat4 duckWorldMat = glm::mat4(1.0f);
     //duckWorldMat = glm::rotate(duckWorldMat, -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    GLTFResources resources{ model };
-
     while (!glfwWindowShouldClose(window))
     {
         // Update
@@ -245,7 +245,7 @@ int main(void)
         Submesh& mesh = duckMesh.submeshes[0];
         Texture white = Texture::White1x1TextureRGBA();
         Texture red = Texture::Max1x1TextureRed();
-        PBRMaterial& material = resources.materials[mesh.materialIndex];
+        PBRMaterial& material = scene.materials[mesh.materialIndex];
 
         geometryPassShader.SetVec4("material.baseColorFactor", material.baseColorFactor);
         geometryPassShader.SetFloat("material.metallicFactor", material.metallicFactor);
@@ -258,19 +258,33 @@ int main(void)
             int textureUnit = 0;
 
             glActiveTexture(GL_TEXTURE0 + textureUnit);
-            glBindTexture(GL_TEXTURE_2D, resources.textures[material.baseColorTextureIdx].id);
+            if (material.baseColorTextureIdx < 0)
+            {
+                glBindTexture(GL_TEXTURE_2D, Texture::White1x1TextureRGBA().id);
+            }
+            else
+            {
+                glBindTexture(GL_TEXTURE_2D, scene.textures[material.baseColorTextureIdx].id);
+            }
             geometryPassShader.SetInt("material.baseColorTexture", textureUnit);
             textureUnit++;
 
             glActiveTexture(GL_TEXTURE0 + textureUnit);
-            glBindTexture(GL_TEXTURE_2D, resources.textures[material.metallicRoughnessTextureIdx].id);
+            if (material.metallicRoughnessTextureIdx < 0)
+            {
+                glBindTexture(GL_TEXTURE_2D, Texture::White1x1TextureRGBA().id);
+            }
+            else
+            {
+                glBindTexture(GL_TEXTURE_2D, scene.textures[material.metallicRoughnessTextureIdx].id);
+            }
             geometryPassShader.SetInt("material.metallicRoughnessTexture", textureUnit);
             textureUnit++;
 
             if (material.normalTextureIdx >= 0)
             {
                 glActiveTexture(GL_TEXTURE0 + textureUnit);
-                glBindTexture(GL_TEXTURE_2D, resources.textures[material.normalTextureIdx].id);
+                glBindTexture(GL_TEXTURE_2D, scene.textures[material.normalTextureIdx].id);
                 geometryPassShader.SetInt("material.normalTexture", textureUnit);
                 textureUnit++;
 
@@ -283,7 +297,14 @@ int main(void)
             }
 
             glActiveTexture(GL_TEXTURE0 + textureUnit);
-            glBindTexture(GL_TEXTURE_2D, resources.textures[material.occlusionTextureIdx].id);
+            if (material.occlusionTextureIdx < 0)
+            {
+                glBindTexture(GL_TEXTURE_2D, Texture::Max1x1TextureRed().id);
+            }
+            else 
+            {
+                glBindTexture(GL_TEXTURE_2D, scene.textures[material.occlusionTextureIdx].id);
+            }
             geometryPassShader.SetInt("material.occlusionTexture", textureUnit);
             textureUnit++;
         }

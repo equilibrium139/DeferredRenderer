@@ -9,6 +9,7 @@
 
 struct Submesh
 {
+	// TODO: make one VAO for each vertex layout, not for each submesh
 	GLuint VAO;
 	VertexAttribute flags = VertexAttribute::POSITION;
 	int countVerticesOrIndices;
@@ -19,11 +20,10 @@ struct Submesh
 
 struct Mesh
 {
-	Mesh(const tinygltf::Mesh& mesh, const tinygltf::Model& model);
 	std::vector<Submesh> submeshes;
 	BBox boundingBox {
 		.minXYZ = glm::vec3(FLT_MAX),
 		.maxXYZ = glm::vec3(-FLT_MAX)
 	};
-	bool HasMorphTargets();
+	bool HasMorphTargets() const;
 };

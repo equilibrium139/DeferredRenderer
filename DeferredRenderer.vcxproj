@@ -135,27 +135,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Animation.cpp" />
     <ClCompile Include="Framebuffer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="GLTFHelpers.cpp" />
-    <ClCompile Include="GLTFResources.cpp" />
+    <ClCompile Include="GLTFMeshParser.cpp" />
+    <ClCompile Include="GLTFParser.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="mikktspace.cpp" />
     <ClCompile Include="PBRMaterial.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="tiny_gltf.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
     <ClInclude Include="BBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Framebuffer.h" />
     <ClInclude Include="GLTFHelpers.h" />
-    <ClInclude Include="GLTFResources.h" />
+    <ClInclude Include="GLTFMeshParser.h" />
+    <ClInclude Include="GLTFParser.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="mikktspace.h" />

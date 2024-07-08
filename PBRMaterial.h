@@ -4,6 +4,7 @@
 #include <string>
 #include <tiny_gltf.h>
 
+// Important: all texture indies here are not OpenGL IDs. They are indices into the scene's texture array
 struct PBRMaterial
 {
 	std::string name;
