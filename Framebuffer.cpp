@@ -19,7 +19,7 @@ Framebuffer::Framebuffer(int width, int height, const std::vector<ColorAttachmen
 		GLuint& textureID = colorTextures[i];
 		glGenTextures(1, &textureID);
 		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, info.internalFormat, width, height, 0, info.format, info.type, NULL);
+		glTexStorage2D(GL_TEXTURE_2D, 1, info.internalFormat, width, height);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, info.minFilterMode);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, info.magFilterMode);
 		GLenum attachment = GL_COLOR_ATTACHMENT0 + i;

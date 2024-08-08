@@ -7,12 +7,6 @@
 struct ColorAttachmentInfo
 {
 	GLint internalFormat;
-
-	// TODO: remove format and type since probably never used for framebuffer since data is never uploaded, but produced by rendering
-	// and use glTexStorage instead of glTexImage while you're at it
-	GLenum format;
-	GLenum type; 
-
 	GLint minFilterMode;
 	GLint magFilterMode;
 };

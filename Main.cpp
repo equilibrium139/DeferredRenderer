@@ -79,7 +79,7 @@ int main(void)
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
-    std::string filepath = "C:\\dev\\gltf-models\\Duck\\glTF\\Duck.gltf";
+    std::string filepath = "C:\\dev\\gltf-models\\BarramundiFish\\glTF\\BarramundiFish.gltf";
 
     bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, filepath);
 
@@ -106,36 +106,26 @@ int main(void)
         {
             ColorAttachmentInfo { // base color
                 .internalFormat = GL_RGBA8,
-                .format = GL_RGBA,
-                .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
             ColorAttachmentInfo { // metallic roughness occlusion
                 .internalFormat = GL_RGB8,
-                .format = GL_RGB,
-                .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
             ColorAttachmentInfo { // normal
                 .internalFormat = GL_RGB8,
-                .format = GL_RGB,
-                .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
             ColorAttachmentInfo { // position
                 .internalFormat = GL_RGB16F,
-                .format = GL_RGB,
-                .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
             ColorAttachmentInfo { // hdr texture for lighting pass
                 .internalFormat = GL_RGB16F,
-                .format = GL_RGB,
-                .type = GL_FLOAT,
                 .minFilterMode = GL_LINEAR,
                 .magFilterMode = GL_LINEAR
             },
@@ -213,11 +203,11 @@ int main(void)
 
 
     Camera camera;
-    camera.position.y = 80.0f;
-    camera.position.z = 210.0f;
+    camera.position.y = 0.0f;
+    camera.position.z = 0.6f;
 
     glm::mat4 duckWorldMat = glm::mat4(1.0f);
-    //duckWorldMat = glm::rotate(duckWorldMat, -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    duckWorldMat = glm::rotate(duckWorldMat, -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     while (!glfwWindowShouldClose(window))
     {
