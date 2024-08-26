@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Framebuffer.h"
 #include "GLTFParser.h"
+#include "Input.h"
 #include "Light.h"
 #include "Mesh.h"
 #include "Shader.h"
@@ -13,6 +14,40 @@
 
 const int windowWidth = 640;
 const int windowHeight = 480;
+
+// TODO: modify to allow ImGui to capture input once ImGui is incorporated
+static void ProcessInput(GLFWwindow* window, Input& outInput)
+{
+    static bool firstPoll = true;
+
+    auto prevMouseX = outInput.mouseX;
+    auto prevMouseY = outInput.mouseY;
+    double currentMouseX, currentMouseY;
+    glfwGetCursorPos(window, &currentMouseX, &currentMouseY);
+    outInput.mouseX = (float)currentMouseX;
+    outInput.mouseY = (float)currentMouseY;
+
+    glfwGetWindowSize(window, &outInput.windowWidth, &outInput.windowHeight);
+
+    if (firstPoll)
+    {
+        outInput.mouseDeltaX = 0.0;
+        outInput.mouseDeltaY = 0.0;
+        firstPoll = false;
+    }
+    else
+    {
+        outInput.mouseDeltaX = outInput.mouseX - prevMouseX;
+        outInput.mouseDeltaY = prevMouseY - outInput.mouseY;
+    }
+
+    outInput.leftMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+
+    outInput.wPressed = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+    outInput.sPressed = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+    outInput.aPressed = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+    outInput.dPressed = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+}
 
 static std::vector<std::string> GetShaderDefines(VertexAttribute flags, bool flatShading)
 {
@@ -203,15 +238,30 @@ int main(void)
 
 
     Camera camera;
-    camera.position.y = 0.0f;
+    camera.position.y = 0.1f;
     camera.position.z = 0.6f;
 
     glm::mat4 duckWorldMat = glm::mat4(1.0f);
     duckWorldMat = glm::rotate(duckWorldMat, -45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
+    Input input;
+   
+    float lastFrameStartTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(window))
     {
+        float currentTime = glfwGetTime();
+        input.deltaTime = currentTime - lastFrameStartTime;
+        lastFrameStartTime = currentTime;
+
         // Update
+        ProcessInput(window, input);        
+        if (input.wPressed) camera.ProcessKeyboard(CAM_FORWARD, input.deltaTime);
+        if (input.aPressed) camera.ProcessKeyboard(CAM_LEFT, input.deltaTime);
+        if (input.sPressed) camera.ProcessKeyboard(CAM_BACKWARD, input.deltaTime);
+        if (input.dPressed) camera.ProcessKeyboard(CAM_RIGHT, input.deltaTime);
+
+        if (input.leftMousePressed) camera.ProcessMouseMovement(input.mouseDeltaX, input.mouseDeltaY);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -233,8 +283,6 @@ int main(void)
         geometryPassShader.SetMat3("normalMatrixVS", normalMatrix);
 
         Submesh& mesh = duckMesh.submeshes[0];
-        Texture white = Texture::White1x1TextureRGBA();
-        Texture red = Texture::Max1x1TextureRed();
         PBRMaterial& material = scene.materials[mesh.materialIndex];
 
         geometryPassShader.SetVec4("material.baseColorFactor", material.baseColorFactor);
